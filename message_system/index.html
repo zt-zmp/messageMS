@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>消息管理</title>
+    <script src="../web/assets/vue.js"></script>
+    <script src="../web/assets/axios.js"></script>
+    <link rel="stylesheet" href="../web/assets/bootstrap.css">
+    <style>
+        #app {
+            width: 600px;
+            margin: 30px auto;
+        }
+        .btn-wrap {
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <div>
+        <h3>消息管理</h3>
+    </div>
+    <div>
+        <table class="table">
+            <tr style="background: skyblue">
+                <th v-on:change="checkReverse">选择</th>
+                <th>编号</th>
+                <th>内容</th>
+                <th>发布日期</th>
+            </tr>
+            <tr v-for="message in messages" :key="message.mid">
+                <td><input type="checkbox" v-model="message.checked"></td>
+                <td>{{message.mid}}</td>
+                <td>{{message.mcontent}}</td>
+                <td>{{message.publish}}</td>
+            </tr>
+        </table>
+        <div v-if="messages.length === 0">经查询，没有新消息了</div>
+    </div>
+    <div class="btn-wrap">
+        <div>
+            <button class="btn btn-primary" v-on:click="deleteMessages">删除所选行</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    new Vue({
+        el: '#app',
+        data: {
+            messages: []
+        },
+        methods: {
+            loadMessages() {
+                axios({
+                    method: 'get',
+                    url: 'list'
+                }).then((r) => {
+                    this.messages = r.data.data.map(c => {
+                        c.checked = false;
+                        return c;
+                    });
+                });
+            },
+            deleteMessages() {
+                let mid = this.messages.filter(c => c.checked === true).map(c => c.mid).join(',');
+
+                if (!mid) {
+                    alert("没有选择要删除的数据行！");
+                    return;
+                }
+                if (!confirm('是否真的删除？'))
+                    return;
+                axios({
+                    method: 'get',
+                    url: 'delete?mid=' + mid
+                }).then(() => {
+                    alert('删除成功!');
+                    this.loadMessage();
+                }).catch(() => {
+                    alert('删除失败');
+                });
+            },
+            checkReverse(mid) {
+                this.messages.forEach((message) => {
+                    if (message.mid === mid) {
+                        message.checked = !message.checked;
+                    }
+                });
+                console.log(this.messages);
+            }
+
+        },
+        mounted() {
+            this.loadMessages();
+        }
+    })
+</script>
+</body>
+</html>
